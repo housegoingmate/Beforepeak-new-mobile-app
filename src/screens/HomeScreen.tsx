@@ -262,6 +262,9 @@ export const HomeScreen: React.FC = () => {
             </View>
           </View>
 
+        </View>
+
+
         {/* Tonight only */}
         {tonightOnly.length > 0 && (
           <View className="section" style={styles.section}>
