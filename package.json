@@ -41,7 +41,7 @@
     "@expo/vector-icons": "^14.1.0",
     "react-native-webview": "13.13.5",
     "typescript": "5.3.3"
-  }
+  },
   "devDependencies": {
     "@babel/core": "^7.20.0",
     "@babel/preset-env": "^7.20.0",
