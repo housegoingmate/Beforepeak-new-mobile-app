@@ -23,15 +23,6 @@ import { fetchPopularRestaurants, fetchNearbyRestaurants, fetchDistinctTerritori
 import { hapticFeedback } from '../utils/haptics';
 import { supabase } from '../lib/supabase';
 import { toggleFavorite } from '../services/FavoritesService';
-// Optional app logo (drop file at mobile-app/beforepeak/assets/beforepeak-logo.png)
-let logoSource: any | null = null;
-try {
-  // Keep path static for Metro bundler
-  // @ts-ignore - asset may not exist yet
-  logoSource = require('../../assets/beforepeak-logo.png');
-} catch (e) {
-  logoSource = null;
-}
 
 
 export const HomeScreen: React.FC = () => {
@@ -180,12 +171,15 @@ export const HomeScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
-        <View style={styles.header}>
+        <View style={styles.topBar}>
+          <Text style={styles.brand}>BeforePeak</Text>
           {!isAuthed && (
             <TouchableOpacity style={styles.authButton} onPress={() => navigation.navigate('Auth')}>
               <Text style={styles.authButtonText}>Sign In / Sign Up</Text>
             </TouchableOpacity>
           )}
+        </View>
+        <View style={styles.header}>
           <Text style={styles.title}>{t('home.title')}</Text>
           <Text style={styles.subtitle}>{t('home.subtitle')}</Text>
         </View>
@@ -233,15 +227,15 @@ export const HomeScreen: React.FC = () => {
         <View style={styles.promoBanner}>
           <View style={styles.promoLeft}>
             <View style={styles.logoBadge}>
-              {logoSource ? (
-                <Image source={logoSource} style={styles.logoImage} resizeMode="contain" />
-              ) : (
-                <Ionicons name="restaurant" size={18} color={colors.text.inverse} />
-              )}
+              <Ionicons name="restaurant" size={18} color={colors.text.inverse} />
             </View>
             <View>
               <Text style={styles.promoTitle}>Up to 50% OFF</Text>
               <Text style={styles.promoSubtitle}>during non-peak hours</Text>
+              <View style={styles.trustRow}>
+                <Ionicons name="wallet" size={16} color={colors.text.inverse} />
+                <Text style={styles.trustText}> PayMe ready</Text>
+              </View>
             </View>
           </View>
           <TouchableOpacity
@@ -250,11 +244,6 @@ export const HomeScreen: React.FC = () => {
           >
             <Text style={styles.promoCtaText}>Explore deals</Text>
           </TouchableOpacity>
-            <View style={styles.trustRow}>
-              <Ionicons name="wallet" size={16} color={colors.text.inverse} />
-              <Text style={styles.trustText}> PayMe ready</Text>
-            </View>
-
         </View>
         {/* How it works */}
         <View style={styles.sectionCompact}>
@@ -449,10 +438,24 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: spacing.xxl,
+    paddingBottom: spacing.xxl + 24,
+  },
+  topBar: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.sm,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  brand: {
+    ...typography.h4,
+    color: colors.text.primary,
+    fontWeight: '800',
   },
   header: {
-    padding: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.lg,
     alignItems: 'center',
   },
   title: {
@@ -476,6 +479,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: spacing.md,
+    minHeight: 84,
   },
   promoLeft: {
     flexDirection: 'row',
@@ -506,10 +511,11 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
   },
   promoCta: {
-    paddingVertical: 8,
-    paddingHorizontal: spacing.md,
+    paddingVertical: 10,
+    paddingHorizontal: spacing.lg,
     backgroundColor: colors.primary.purple,
     borderRadius: borderRadius.md,
+    marginLeft: spacing.md,
   },
   promoCtaText: {
     ...typography.caption,
@@ -552,10 +558,7 @@ const styles = StyleSheet.create({
   },
 
   authButton: {
-    position: 'absolute',
-    right: spacing.lg,
-    top: spacing.sm,
-    paddingVertical: 6,
+    paddingVertical: 8,
     paddingHorizontal: spacing.md,
     borderRadius: 16,
     borderWidth: 1,

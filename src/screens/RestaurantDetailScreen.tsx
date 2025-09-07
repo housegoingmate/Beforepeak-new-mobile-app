@@ -12,7 +12,10 @@ import {
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import FastImage from 'react-native-fast-image';
+// Safe image: try FastImage, fallback to RN Image (for Snack/web)
+import { Image as RNImage } from 'react-native';
+let FastImage: any = RNImage as any;
+try { FastImage = require('react-native-fast-image'); } catch (e) { FastImage.resizeMode = RNImage.resizeMode || { cover: 'cover' }; }
 
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
