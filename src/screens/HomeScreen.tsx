@@ -533,11 +533,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  logoImage: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-  },
 
   promoTitle: {
     ...typography.h5,
@@ -699,11 +694,6 @@ const styles = StyleSheet.create({
   howText: {
     ...typography.caption,
     color: colors.text.secondary,
-  },
-  learnMoreText: {
-    ...typography.caption,
-    color: colors.primary.purple,
-    fontWeight: '600',
   },
   restaurantItem: {
     marginRight: spacing.md,
