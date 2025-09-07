@@ -1,107 +1,284 @@
-import React, { useEffect, useState } from 'react';
-import { ScrollView, Text, StyleSheet, View, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  SafeAreaView,
+  ScrollView,
+  TextInput,
+  TouchableOpacity,
+  FlatList,
+  RefreshControl,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { listRestaurants, APIRestaurant } from '../services/RestaurantService';
-import RestaurantCard from '../components/RestaurantCard';
-import Header from '../components/Header';
-import { useLanguage } from '../contexts/LanguageContext';
-import { useAuth } from '../hooks/useAuth';
+import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 
-export default function HomeScreen() {
-  const navigation = useNavigation<any>();
+import { RestaurantCard } from '../components/restaurant/RestaurantCard';
+import { Button } from '../components/ui/Button';
+import { colors, typography, spacing, borderRadius, commonStyles } from '../theme';
+import { UIRestaurant } from '../types/database';
+import { fetchPopularRestaurants, fetchNearbyRestaurants } from '../services/restaurants';
+import { hapticFeedback } from '../utils/haptics';
+
+export const HomeScreen: React.FC = () => {
   const { t } = useTranslation();
-  const { language } = useLanguage();
-  const { userId } = useAuth();
+  const navigation = useNavigation();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [popularRestaurants, setPopularRestaurants] = useState<UIRestaurant[]>([]);
+  const [nearbyRestaurants, setNearbyRestaurants] = useState<UIRestaurant[]>([]);
   const [loading, setLoading] = useState(true);
-  const [featuredRestaurants, setFeaturedRestaurants] = useState<APIRestaurant[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
-    const run = async () => {
-      try {
-        const data = await listRestaurants({ sort: 'rating', limit: 6 });
-        setFeaturedRestaurants(data || []);
-      } catch (e) {
-        console.warn('featured restaurants', e);
-      } finally {
-        setLoading(false);
-      }
-    };
-    run();
+    loadData();
   }, []);
 
-  return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Header />
-      <Text style={styles.tagline}>{t('home_tagline')}</Text>
-      <Text style={styles.title}>{t('home_title')}</Text>
-      <Text style={styles.subtitle}>{t('home_subtitle')}</Text>
+  const loadData = async () => {
+    try {
+      const [popular, nearby] = await Promise.all([
+        fetchPopularRestaurants(),
+        fetchNearbyRestaurants(22.3193, 114.1694), // Hong Kong coordinates
+      ]);
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{t('home_featured')}</Text>
-        {loading ? (
-          <ActivityIndicator style={{ marginVertical: 20 }} />
-        ) : (
-          <View style={styles.grid}>
-            {featuredRestaurants.map(r => (
-              <RestaurantCard
-                key={r.id}
-                restaurant={{
-                  name: r.name_en || '',
-                  name_zh: r.name_zh,
-                  image: r.cover_photo_url || r.restaurant_photos?.[0]?.url || '',
-                  discount: '50%',
-                  cuisine: r.cuisine_type || r.cuisine_type_en || '',
-                  rating: r.average_rating || 0,
-                  reviews: r.total_reviews || 0,
-                  district: r.territory || '',
-                  availableToday: (r.time_windows || []).length > 0,
-                  nextSlot: (r.time_windows || [])[0]?.start_time ? (language==='zh-HK' ? `下個時段 ${r.time_windows[0].start_time}` : `Next slot ${r.time_windows[0].start_time}`) : undefined,
-                }}
-                onPress={() => navigation.navigate('RestaurantDetail', { id: r.id })}
-                style="grid"
-                size="medium"
-              />
-            ))}
-          </View>
-        )}
-      </View>
+      setPopularRestaurants(popular.slice(0, 5));
+      setNearbyRestaurants(nearby.slice(0, 5));
+    } catch (error) {
+      console.error('Error loading home data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      <View style={styles.actions}>
-        <TouchableOpacity style={styles.actionBtn} onPress={() => navigation.navigate('Restaurants')}>
-          <Text style={styles.actionText}>{t('home_browse_all')}</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.actionBtn}
-          onPress={() => (userId ? navigation.navigate('Bookings') : navigation.navigate('Welcome'))}
-        >
-          <Text style={styles.actionText}>{t('home_my_bookings')}</Text>
-        </TouchableOpacity>
-      </View>
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
+  };
 
-      <View style={styles.infoCard}>
-        <Text style={styles.infoTitle}>{t('home_how_it_works')}</Text>
-        <Text style={styles.infoText}>• {t('home_hiw_point1')}</Text>
-        <Text style={styles.infoText}>• {t('home_hiw_point2')}</Text>
-        <Text style={styles.infoText}>• {t('home_hiw_point3')}</Text>
-      </View>
-    </ScrollView>
+  const handleSearch = () => {
+    hapticFeedback.light();
+    navigation.navigate('Restaurants', { searchQuery });
+  };
+
+  const handleRestaurantPress = (restaurant: UIRestaurant) => {
+    hapticFeedback.medium();
+    navigation.navigate('RestaurantDetail', { restaurant });
+  };
+
+  const handleViewAllPopular = () => {
+    hapticFeedback.light();
+    navigation.navigate('Restaurants', { sortBy: 'rating' });
+  };
+
+  const handleViewAllNearby = () => {
+    hapticFeedback.light();
+    navigation.navigate('Restaurants', { sortBy: 'distance' });
+  };
+
+  const handleGetRecommendation = () => {
+    hapticFeedback.light();
+    navigation.navigate('Restaurants', { showRecommendations: true });
+  };
+
+  const renderRestaurantItem = ({ item }: { item: UIRestaurant }) => (
+    <View style={styles.restaurantItem}>
+      <RestaurantCard
+        restaurant={item}
+        onPress={handleRestaurantPress}
+        showDistance={true}
+      />
+    </View>
   );
-}
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+        }
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.title}>{t('home.title')}</Text>
+          <Text style={styles.subtitle}>{t('home.subtitle')}</Text>
+        </View>
+
+        {/* Search Bar */}
+        <View style={styles.searchContainer}>
+          <View style={styles.searchBar}>
+            <Ionicons name="search" size={20} color={colors.text.tertiary} style={styles.searchIcon} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder={t('home.searchPlaceholder')}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              onSubmitEditing={handleSearch}
+              returnKeyType="search"
+            />
+          </View>
+          <Button
+            title={t('common.search')}
+            onPress={handleSearch}
+            size="medium"
+            style={styles.searchButton}
+          />
+        </View>
+
+        {/* Quick Actions */}
+        <View style={styles.quickActions}>
+          <TouchableOpacity style={styles.quickAction} onPress={handleGetRecommendation}>
+            <Ionicons name="star" size={24} color={colors.primary.purple} />
+            <Text style={styles.quickActionText}>{t('home.getRecommendation')}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.quickAction} onPress={handleViewAllNearby}>
+            <Ionicons name="pin" size={24} color={colors.primary.purple} />
+            <Text style={styles.quickActionText}>Nearby</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.quickAction} onPress={handleViewAllPopular}>
+            <Ionicons name="trending-up" size={24} color={colors.primary.purple} />
+            <Text style={styles.quickActionText}>Popular</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Popular Restaurants */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>{t('home.popularRestaurants')}</Text>
+            <TouchableOpacity onPress={handleViewAllPopular}>
+              <Text style={styles.viewAllText}>{t('home.viewAll')}</Text>
+            </TouchableOpacity>
+          </View>
+
+          <FlatList
+            data={popularRestaurants}
+            renderItem={renderRestaurantItem}
+            keyExtractor={(item) => item.id}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.horizontalList}
+          />
+        </View>
+
+        {/* Nearby Restaurants */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>{t('home.nearbyRestaurants')}</Text>
+            <TouchableOpacity onPress={handleViewAllNearby}>
+              <Text style={styles.viewAllText}>{t('home.viewAll')}</Text>
+            </TouchableOpacity>
+          </View>
+
+          <FlatList
+            data={nearbyRestaurants}
+            renderItem={renderRestaurantItem}
+            keyExtractor={(item) => item.id}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.horizontalList}
+          />
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+};
 
 const styles = StyleSheet.create({
-  container: { padding: 16 },
-  tagline: { color: '#7C3AED', fontWeight: '600', marginBottom: 6 },
-  title: { fontSize: 22, fontWeight: '800', marginBottom: 6, color: '#111827' },
-  subtitle: { color: '#6B7280', marginBottom: 24, fontSize: 14 },
-  section: { marginBottom: 24 },
-  sectionTitle: { fontSize: 18, fontWeight: '600', marginBottom: 12 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap' },
-  actions: { flexDirection: 'row', gap: 12, marginBottom: 24 },
-  actionBtn: { flex: 1, backgroundColor: '#7C3AED', paddingVertical: 12, borderRadius: 8, alignItems: 'center' },
-  actionText: { color: '#fff', fontWeight: '600' },
-  infoCard: { backgroundColor: '#F8FAFC', borderRadius: 12, padding: 16 },
-  infoTitle: { fontSize: 16, fontWeight: '600', marginBottom: 8 },
-  infoText: { color: '#374151', marginBottom: 4 },
+  container: {
+    ...commonStyles.container,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: spacing.xxl,
+  },
+  header: {
+    padding: spacing.lg,
+    alignItems: 'center',
+  },
+  title: {
+    ...typography.h1,
+    color: colors.primary.purple,
+    marginBottom: spacing.xs,
+  },
+  subtitle: {
+    ...typography.body1,
+    color: colors.text.secondary,
+    textAlign: 'center',
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.lg,
+    alignItems: 'center',
+  },
+  searchBar: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.background.secondary,
+    borderRadius: borderRadius.lg,
+    paddingHorizontal: spacing.md,
+    marginRight: spacing.sm,
+  },
+  searchIcon: {
+    marginRight: spacing.sm,
+  },
+  searchInput: {
+    flex: 1,
+    ...typography.body1,
+    color: colors.text.primary,
+    paddingVertical: spacing.md,
+  },
+  searchButton: {
+    paddingHorizontal: spacing.lg,
+  },
+  quickActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.xl,
+  },
+  quickAction: {
+    alignItems: 'center',
+    padding: spacing.md,
+  },
+  quickActionText: {
+    ...typography.caption,
+    color: colors.text.secondary,
+    marginTop: spacing.xs,
+  },
+  section: {
+    marginBottom: spacing.xl,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.md,
+  },
+  sectionTitle: {
+    ...typography.h4,
+    color: colors.text.primary,
+  },
+  viewAllText: {
+    ...typography.body2,
+    color: colors.primary.purple,
+    fontWeight: '600',
+  },
+  horizontalList: {
+    paddingLeft: spacing.lg,
+  },
+  restaurantItem: {
+    marginRight: spacing.md,
+    width: 280,
+  },
 });
 

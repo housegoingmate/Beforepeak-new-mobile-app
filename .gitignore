@@ -73,3 +73,9 @@ yarn-error.log
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+
+
+# Snack-friendly: ignore heavy native/build outputs
+.app-build/
+.modules-build/
+android/.cxx/

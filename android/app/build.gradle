@@ -1,8 +1,6 @@
-plugins {
-    id 'com.android.application'
-    id 'org.jetbrains.kotlin.android'
-    id 'com.facebook.react'
-}
+apply plugin: "com.android.application"
+apply plugin: "org.jetbrains.kotlin.android"
+apply plugin: "com.facebook.react"
 
 /**
  * This is the configuration block to customize your React Native Android app.
@@ -65,29 +63,31 @@ def enableProguardInReleaseBuilds = false
  * The preferred build flavor of JavaScriptCore (JSC)
  *
  * For example, to use the international variant, you can use:
- * `def jscFlavor = io.github.react-native-community:jsc-android-intl:2026004.+`
+ * `def jscFlavor = 'org.webkit:android-jsc-intl:+'`
  *
  * The international variant includes ICU i18n library and necessary data
  * allowing to use e.g. `Date.toLocaleString` and `String.localeCompare` that
  * give correct results when using with locales other than en-US. Note that
  * this variant is about 6MiB larger per architecture than default.
  */
-def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
+def jscFlavor = 'org.webkit:android-jsc:+'
+
+    // Use a custom build directory to avoid Windows file lock issues on app/build
+    buildDir = rootProject.projectDir.absolutePath + "/.app-build"
 
 android {
     ndkVersion rootProject.ext.ndkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace "com.beforepeak.app"
+    namespace "com.beforepeakmobile"
     defaultConfig {
-        applicationId "com.beforepeak.app"
+        applicationId "com.beforepeakmobile"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
     }
-
     signingConfigs {
         debug {
             storeFile file('debug.keystore')
@@ -96,7 +96,6 @@ android {
             keyPassword 'android'
         }
     }
-
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
@@ -114,8 +113,6 @@ android {
 dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
-
-    // Firebase dependencies removed for now
 
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")

@@ -1,113 +1,351 @@
-import React, { useEffect, useState } from 'react';
-import { ScrollView, Text, StyleSheet, View, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  SafeAreaView,
+  ScrollView,
+  TouchableOpacity,
+  Alert,
+  Switch,
+} from 'react-native';
+import { useTranslation } from 'react-i18next';
+import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+
+import { Button } from '../components/ui/Button';
+import { Card } from '../components/ui/Card';
+import { colors, typography, spacing, borderRadius, commonStyles } from '../theme';
 import { useAuth } from '../hooks/useAuth';
-import { supabase } from '../lib/supabase';
+import { useLanguage } from '../contexts/LanguageContext';
+import { hapticFeedback } from '../utils/haptics';
 
-export default function ProfileScreen() {
-  const { userId, loading: authLoading } = useAuth();
-  const [loading, setLoading] = useState(true);
-  const [profile, setProfile] = useState<any>(null);
-  const [credits, setCredits] = useState(0);
+export const ProfileScreen: React.FC = () => {
+  const { t, i18n } = useTranslation();
+  const navigation = useNavigation();
+  const { user, signOut } = useAuth();
+  const { language, setLanguage } = useLanguage();
 
-  useEffect(() => {
-    const run = async () => {
-      if (!userId) return;
-      try {
-        const { data: userData, error: userError } = await supabase.auth.getUser();
-        if (userError) throw userError;
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [loading, setLoading] = useState(false);
 
-        // Try to get profile from users table
-        const { data: profileData } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', userId)
-          .single();
-
-        setProfile({
-          email: userData.user?.email,
-          phone: userData.user?.phone,
-          ...profileData
-        });
-
-        // Get account credits (mock for now)
-        setCredits(0);
-      } catch (e) {
-        console.warn('profile load', e);
-      } finally {
-        setLoading(false);
-      }
-    };
-    if (!authLoading) run();
-  }, [authLoading, userId]);
-
-  const onSignOut = async () => {
-    Alert.alert('登出', '確定要登出嗎？', [
-      { text: '取消', style: 'cancel' },
-      { text: '登出', onPress: async () => {
-        await supabase.auth.signOut();
-      }}
-    ]);
+  const handleLanguageToggle = () => {
+    hapticFeedback.selection();
+    const newLanguage = language === 'en' ? 'zh-HK' : 'en';
+    setLanguage(newLanguage);
+    i18n.changeLanguage(newLanguage);
   };
 
-  if (authLoading || loading) return <View style={styles.center}><ActivityIndicator /></View>;
+  const handleSignOut = () => {
+    hapticFeedback.light();
+    Alert.alert(
+      t('profile.signOut'),
+      t('profile.signOutConfirm'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('profile.signOut'),
+          style: 'destructive',
+          onPress: async () => {
+            setLoading(true);
+            await signOut();
+            setLoading(false);
+          }
+        }
+      ]
+    );
+  };
+
+  const handleEditProfile = () => {
+    hapticFeedback.light();
+    // TODO: Navigate to edit profile screen
+    Alert.alert('Coming Soon', 'Profile editing will be available soon');
+  };
+
+  const handleMyBookings = () => {
+    hapticFeedback.light();
+    navigation.navigate('Bookings');
+  };
+
+  const handleFavorites = () => {
+    hapticFeedback.light();
+    // TODO: Navigate to favorites screen
+    Alert.alert('Coming Soon', 'Favorites will be available soon');
+  };
+
+  const handlePaymentMethods = () => {
+    hapticFeedback.light();
+    // TODO: Navigate to payment methods screen
+    Alert.alert('Coming Soon', 'Payment methods management will be available soon');
+  };
+
+  const handleHelp = () => {
+    hapticFeedback.light();
+    // TODO: Navigate to help screen
+    Alert.alert('Coming Soon', 'Help & Support will be available soon');
+  };
+
+  const renderProfileHeader = () => (
+    <Card style={styles.profileCard}>
+      <View style={styles.profileHeader}>
+        <View style={styles.avatarContainer}>
+          <Ionicons name="person" size={32} color={colors.text.inverse} />
+        </View>
+        <View style={styles.profileInfo}>
+          <Text style={styles.profileName}>
+            {user?.user_metadata?.full_name || user?.email || 'Guest User'}
+          </Text>
+          <Text style={styles.profileEmail}>
+            {user?.email || 'guest@beforepeak.com'}
+          </Text>
+        </View>
+        <TouchableOpacity style={styles.editButton} onPress={handleEditProfile}>
+          <Ionicons name="create-outline" size={20} color={colors.primary.purple} />
+        </TouchableOpacity>
+      </View>
+    </Card>
+  );
+
+  const renderMenuItem = (
+    icon: React.ReactNode,
+    title: string,
+    subtitle?: string,
+    onPress?: () => void,
+    rightElement?: React.ReactNode
+  ) => (
+    <TouchableOpacity style={styles.menuItem} onPress={onPress}>
+      <View style={styles.menuItemLeft}>
+        <View style={styles.menuIcon}>{icon}</View>
+        <View style={styles.menuContent}>
+          <Text style={styles.menuTitle}>{title}</Text>
+          {subtitle && <Text style={styles.menuSubtitle}>{subtitle}</Text>}
+        </View>
+      </View>
+      <View style={styles.menuItemRight}>
+        {rightElement || <Ionicons name="chevron-forward" size={20} color={colors.text.tertiary} />}
+      </View>
+    </TouchableOpacity>
+  );
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>我的帳戶</Text>
-
-      <View style={styles.profileCard}>
-        <Text style={styles.profileName}>{profile?.first_name} {profile?.last_name}</Text>
-        <Text style={styles.profileEmail}>{profile?.email}</Text>
-        {profile?.phone && <Text style={styles.profilePhone}>{profile.phone}</Text>}
+    <SafeAreaView style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>{t('profile.title')}</Text>
       </View>
 
-      <View style={styles.creditsCard}>
-        <Text style={styles.creditsTitle}>帳戶積分</Text>
-        <Text style={styles.creditsAmount}>HK${credits}</Text>
-        <Text style={styles.creditsNote}>可用於未來預訂或退款</Text>
-      </View>
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        {/* Profile Header */}
+        {renderProfileHeader()}
 
-      <View style={styles.menuSection}>
-        <TouchableOpacity style={styles.menuItem}>
-          <Text style={styles.menuText}>編輯個人資料</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.menuItem}>
-          <Text style={styles.menuText}>預訂記錄</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.menuItem}>
-          <Text style={styles.menuText}>推薦朋友</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.menuItem}>
-          <Text style={styles.menuText}>客戶服務</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.menuItem}>
-          <Text style={styles.menuText}>關於我們</Text>
-        </TouchableOpacity>
-      </View>
+        {/* Account Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>{t('profile.account')}</Text>
+          <Card style={styles.menuCard}>
+            {renderMenuItem(
+              <Ionicons name="notifications" size={20} color={colors.primary.purple} />,
+              t('profile.myBookings'),
+              t('profile.myBookingsSubtitle'),
+              handleMyBookings
+            )}
+            {renderMenuItem(
+              <Ionicons name="heart" size={20} color={colors.primary.purple} />,
+              t('profile.favorites'),
+              t('profile.favoritesSubtitle'),
+              handleFavorites
+            )}
+            {renderMenuItem(
+              <Ionicons name="card" size={20} color={colors.primary.purple} />,
+              t('profile.paymentMethods'),
+              t('profile.paymentMethodsSubtitle'),
+              handlePaymentMethods
+            )}
+          </Card>
+        </View>
 
-      <TouchableOpacity style={styles.signOutBtn} onPress={onSignOut}>
-        <Text style={styles.signOutText}>登出</Text>
-      </TouchableOpacity>
-    </ScrollView>
+        {/* Settings Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>{t('profile.settings')}</Text>
+          <Card style={styles.menuCard}>
+            {renderMenuItem(
+              <Ionicons name="notifications" size={20} color={colors.primary.purple} />,
+              t('profile.notifications'),
+              t('profile.notificationsSubtitle'),
+              undefined,
+              <Switch
+                value={notificationsEnabled}
+                onValueChange={(value) => {
+                  hapticFeedback.selection();
+                  setNotificationsEnabled(value);
+                }}
+                trackColor={{ false: colors.border.medium, true: colors.primary.purple50 }}
+                thumbColor={notificationsEnabled ? colors.primary.purple : colors.background.primary}
+              />
+            )}
+            {renderMenuItem(
+              <Ionicons name="globe" size={20} color={colors.primary.purple} />,
+              t('profile.language'),
+              language === 'en' ? 'English' : '繁體中文',
+              handleLanguageToggle
+            )}
+          </Card>
+        </View>
+
+        {/* Support Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>{t('profile.support')}</Text>
+          <Card style={styles.menuCard}>
+            {renderMenuItem(
+              <Ionicons name="help-circle" size={20} color={colors.primary.purple} />,
+              t('profile.help'),
+              t('profile.helpSubtitle'),
+              handleHelp
+            )}
+          </Card>
+        </View>
+
+        {/* Sign Out */}
+        <View style={styles.section}>
+          <Button
+            title={t('profile.signOut')}
+            onPress={handleSignOut}
+            variant="secondary"
+            loading={loading}
+            style={styles.signOutButton}
+            icon={<Ionicons name="log-out-outline" size={20} color={colors.error.500} />}
+            textStyle={styles.signOutText}
+          />
+        </View>
+
+        {/* App Info */}
+        <View style={styles.appInfo}>
+          <Text style={styles.appInfoText}>BeforePeak v1.0.0</Text>
+          <Text style={styles.appInfoText}>© 2024 BeforePeak. All rights reserved.</Text>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  container: { padding: 16 },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  title: { fontSize: 22, fontWeight: '700', marginBottom: 16 },
-  profileCard: { backgroundColor: '#fff', borderRadius: 12, padding: 20, marginBottom: 16, alignItems: 'center', elevation: 2 },
-  profileName: { fontSize: 18, fontWeight: '600', marginBottom: 4 },
-  profileEmail: { color: '#6B7280', marginBottom: 2 },
-  profilePhone: { color: '#6B7280' },
-  creditsCard: { backgroundColor: '#F0FDF4', borderRadius: 12, padding: 16, marginBottom: 16, alignItems: 'center' },
-  creditsTitle: { fontSize: 14, color: '#166534', marginBottom: 4 },
-  creditsAmount: { fontSize: 24, fontWeight: '700', color: '#166534', marginBottom: 4 },
-  creditsNote: { fontSize: 12, color: '#166534' },
-  menuSection: { backgroundColor: '#fff', borderRadius: 12, marginBottom: 16, elevation: 1 },
-  menuItem: { paddingVertical: 16, paddingHorizontal: 20, borderBottomWidth: 1, borderBottomColor: '#F3F4F6' },
-  menuText: { fontSize: 16, color: '#374151' },
-  signOutBtn: { backgroundColor: '#FEE2E2', paddingVertical: 12, borderRadius: 8, alignItems: 'center' },
-  signOutText: { color: '#DC2626', fontWeight: '600' },
+  container: {
+    ...commonStyles.container,
+  },
+  header: {
+    padding: spacing.lg,
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border.light,
+  },
+  headerTitle: {
+    ...typography.h3,
+    color: colors.text.primary,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  profileCard: {
+    margin: spacing.lg,
+    marginBottom: spacing.md,
+  },
+  profileHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  avatarContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: colors.primary.purple,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.md,
+  },
+  profileInfo: {
+    flex: 1,
+  },
+  profileName: {
+    ...typography.h5,
+    color: colors.text.primary,
+    marginBottom: spacing.xs,
+  },
+  profileEmail: {
+    ...typography.body2,
+    color: colors.text.secondary,
+  },
+  editButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.primary.purple50,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  section: {
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.lg,
+  },
+  sectionTitle: {
+    ...typography.h6,
+    color: colors.text.primary,
+    marginBottom: spacing.md,
+  },
+  menuCard: {
+    padding: 0,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border.light,
+  },
+  menuItemLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  menuIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.primary.purple50,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.md,
+  },
+  menuContent: {
+    flex: 1,
+  },
+  menuTitle: {
+    ...typography.body1,
+    color: colors.text.primary,
+    fontWeight: '600',
+  },
+  menuSubtitle: {
+    ...typography.caption,
+    color: colors.text.secondary,
+    marginTop: 2,
+  },
+  menuItemRight: {
+    marginLeft: spacing.sm,
+  },
+  signOutButton: {
+    borderColor: colors.error.500,
+  },
+  signOutText: {
+    color: colors.error.500,
+  },
+  appInfo: {
+    alignItems: 'center',
+    paddingVertical: spacing.xl,
+  },
+  appInfoText: {
+    ...typography.caption,
+    color: colors.text.tertiary,
+    marginBottom: spacing.xs,
+  },
 });
 

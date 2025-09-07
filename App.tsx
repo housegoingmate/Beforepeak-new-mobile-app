@@ -1,150 +1,220 @@
-// import 'react-native-url-polyfill/auto'; // Commented for Expo Go compatibility
-// import 'react-native-reanimated'; // Commented for Expo Go compatibility
+/**
+ * Sample React Native App
+ * https://github.com/facebook/react-native
+ *
+ * @format
+ */
+
 import React, { useEffect, useState } from 'react';
-import { StatusBar, Text } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
-// import { StripeProvider } from '@stripe/stripe-react-native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-// import Icon from 'react-native-vector-icons/MaterialIcons'; // Commented for Expo Go compatibility
-import { useTranslation } from 'react-i18next';
-import { useLanguage } from './src/contexts/LanguageContext';
-import { useAuth } from './src/hooks/useAuth';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { StatusBar, Platform } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
-import { APP_SCHEME, DEEP_LINK_HOST } from './src/config/env';
-// import { STRIPE_PUBLISHABLE_KEY } from './src/config/env';
+// Import screens
+import { AuthScreen } from './src/screens/AuthScreen';
+import { HomeScreen } from './src/screens/HomeScreen';
+import { RestaurantsScreen } from './src/screens/RestaurantsScreen';
+import { RestaurantDetailScreen } from './src/screens/RestaurantDetailScreen';
+import { BookingScreen } from './src/screens/BookingScreen';
+import { BookingsScreen } from './src/screens/BookingsScreen';
+import { ProfileScreen } from './src/screens/ProfileScreen';
+import { MapScreen } from './src/screens/MapScreen';
+import { LoadingScreen } from './src/screens/LoadingScreen';
+
+// Import services
 import { supabase } from './src/lib/supabase';
+import { Session } from '@supabase/supabase-js';
+import NotificationService from './src/services/NotificationService';
+import ReviewService from './src/services/ReviewService';
 
-// Screens
-import HomeScreen from './src/screens/HomeScreen';
-import RestaurantsScreen from './src/screens/RestaurantsScreen';
-import BookingsScreen from './src/screens/BookingsScreen';
-import ProfileScreen from './src/screens/ProfileScreen';
-import ReferralsScreen from './src/screens/ReferralsScreen';
-import RestaurantDetailScreen from './src/screens/RestaurantDetailScreen';
-import BookingScreen from './src/screens/BookingScreen';
-import RestaurantMapScreen from './src/screens/RestaurantMapScreen';
-import ModifyBookingScreen from './src/screens/ModifyBookingScreen';
-import PaymentResultScreen from './src/screens/PaymentResultScreen';
-import ReviewsScreen from './src/screens/ReviewsScreen';
+// Import components
+import { MandatoryReviewModal } from './src/components/MandatoryReviewModal';
 
-import WelcomeScreen from './src/screens/auth/WelcomeScreen';
-import EmailSignInScreen from './src/screens/auth/EmailSignInScreen';
-import PhoneSignInScreen from './src/screens/auth/PhoneSignInScreen';
-import AppleSignInScreen from './src/screens/auth/AppleSignInScreen';
-import GoogleSignInScreen from './src/screens/auth/GoogleSignInScreen';
-import AuthCallbackScreen from './src/screens/auth/AuthCallbackScreen';
+// Import theme
+import { colors, componentSpacing } from './src/theme';
 
-// i18n
-import './src/i18n';
-import { LanguageProvider } from './src/contexts/LanguageContext';
+// Import i18n
+import './src/i18n/config';
 
-const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
+const Tab = createBottomTabNavigator();
 
-
+// Main Tab Navigator
 function MainTabs() {
-  const { t, i18n } = useTranslation();
-  const { language } = useLanguage();
-  const { userId: uid } = useAuth();
   return (
-    <Tab.Navigator key={language}
+    <Tab.Navigator
       screenOptions={({ route }) => ({
-        tabBarIcon: ({ color, size }) => {
-          let iconText: string = '🏠';
-          if (route.name === 'Home') iconText = '🏠';
-          else if (route.name === 'Restaurants') iconText = '🔍';
-          else if (route.name === 'Bookings') iconText = '📅';
-          else if (route.name === 'Referrals') iconText = '🎁';
-          else if (route.name === 'Profile') iconText = '👤';
-          return <Text style={{ fontSize: size * 0.8, color }}>{iconText}</Text>;
-        },
-        tabBarActiveTintColor: '#7C3AED',
-        tabBarInactiveTintColor: '#9CA3AF',
         headerShown: false,
+        tabBarStyle: {
+          backgroundColor: colors.background.primary,
+          borderTopWidth: 1,
+          borderTopColor: colors.border.light,
+          height: componentSpacing.tabBarHeight,
+          paddingBottom: Platform.OS === 'ios' ? 20 : 10,
+          paddingTop: 10,
+        },
+        tabBarActiveTintColor: colors.primary.purple,
+        tabBarInactiveTintColor: colors.text.tertiary,
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: '500',
+        },
+        tabBarIcon: ({ focused, color, size }) => {
+          const name = (() => {
+            switch (route.name) {
+              case 'Home':
+                return focused ? 'home' : 'home-outline';
+              case 'Restaurants':
+                return focused ? 'search' : 'search-outline';
+              case 'Map':
+                return focused ? 'map' : 'map-outline';
+              case 'Bookings':
+                return focused ? 'calendar' : 'calendar-outline';
+              case 'Profile':
+                return focused ? 'person' : 'person-outline';
+              default:
+                return 'home-outline';
+            }
+          })();
+          return <Ionicons name={name as any} size={size} color={color} />;
+        },
       })}
     >
-      <Tab.Screen name="Home" component={HomeScreen} options={{ title: t('tab_home') }} />
-      <Tab.Screen name="Restaurants" component={RestaurantsScreen} options={{ title: t('tab_restaurants') }} />
-      {uid ? (
-        <Tab.Screen name="Bookings" component={BookingsScreen} options={{ title: t('tab_bookings') }} />
-      ) : null}
-      <Tab.Screen name="Referrals" component={ReferralsScreen} options={{ title: t('tab_referrals') }} />
-      <Tab.Screen name="Profile" component={ProfileScreen} options={{ title: t('tab_profile') }} />
+      <Tab.Screen
+        name="Home"
+        component={HomeScreen}
+        options={{ tabBarLabel: 'Home' }}
+      />
+      <Tab.Screen
+        name="Restaurants"
+        component={RestaurantsScreen}
+        options={{ tabBarLabel: 'Restaurants' }}
+      />
+      <Tab.Screen
+        name="Map"
+        component={MapScreen}
+        options={{ tabBarLabel: 'Map' }}
+      />
+      <Tab.Screen
+        name="Bookings"
+        component={BookingsScreen}
+        options={{ tabBarLabel: 'Bookings' }}
+      />
+      <Tab.Screen
+        name="Profile"
+        component={ProfileScreen}
+        options={{ tabBarLabel: 'Profile' }}
+      />
     </Tab.Navigator>
   );
 }
 
 export default function App() {
-  const [initialRoute, setInitialRoute] = useState<'Welcome' | 'MainTabs'>('MainTabs');
+  const [session, setSession] = useState<Session | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [pendingReview, setPendingReview] = useState<any>(null);
+  const [showReviewModal, setShowReviewModal] = useState(false);
 
   useEffect(() => {
-    const init = async () => {
-      const { data } = await supabase.auth.getSession();
-      setInitialRoute('MainTabs'); // Always show home first; auth accessible via header
-      supabase.auth.onAuthStateChange((_event) => {
-        // No route switch; Home remains first-entry
-      });
+    // Initialize services
+    const initializeServices = async () => {
+      await NotificationService.getInstance().initialize();
     };
-    init();
+    initializeServices();
+
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setIsLoading(false);
+
+      // Check for pending reviews when user logs in
+      if (session) {
+        checkPendingReviews();
+      }
+    });
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+
+      // Check for pending reviews when user logs in
+      if (session) {
+        checkPendingReviews();
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const linking = {
-    prefixes: [`${APP_SCHEME}://`, `https://${DEEP_LINK_HOST}`],
-    config: {
-      screens: {
-        Welcome: 'welcome',
-        EmailSignIn: 'auth/email',
-        PhoneSignIn: 'auth/phone',
-        AppleSignIn: 'auth/apple',
-        GoogleSignIn: 'auth/google',
-        AuthCallback: 'auth/callback',
-        MainTabs: {
-          screens: {
-            Home: 'home',
-            Restaurants: 'restaurants',
-            Bookings: 'bookings',
-            Referrals: 'referrals',
-            Profile: 'profile',
-          },
-        },
-        RestaurantDetail: 'restaurant/:id',
-        Booking: 'booking/:id',
-        RestaurantMap: 'map',
-        ModifyBooking: 'booking/:id/modify',
-        PaymentResult: 'payment/result',
-        Reviews: 'restaurant/:id/reviews',
-      },
-    },
-  } as const;
+  const checkPendingReviews = async () => {
+    try {
+      const reviewService = ReviewService.getInstance();
+      const pendingReview = await reviewService.checkMandatoryReview();
+
+      if (pendingReview) {
+        setPendingReview(pendingReview);
+        setShowReviewModal(true);
+      }
+    } catch (error) {
+      console.error('Failed to check pending reviews:', error);
+    }
+  };
+
+  const handleReviewComplete = () => {
+    setShowReviewModal(false);
+    setPendingReview(null);
+    // Check if there are more pending reviews
+    setTimeout(checkPendingReviews, 1000);
+  };
+
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
 
   return (
-    {/* <StripeProvider publishableKey={STRIPE_PUBLISHABLE_KEY}> */}
-      <LanguageProvider>
-        <NavigationContainer linking={linking}>
-          <StatusBar barStyle="dark-content" />
-          <Stack.Navigator initialRouteName={initialRoute}>
-          {/* Home-first flow; auth screens available via header action */}
-          <Stack.Screen name="MainTabs" component={MainTabs} options={{ headerShown: false }} />
-
-          {/* Auth */}
-          <Stack.Screen name="Welcome" component={WelcomeScreen} options={{ headerShown: false }} />
-          <Stack.Screen name="EmailSignIn" component={EmailSignInScreen} options={{ headerShown: false }} />
-          <Stack.Screen name="PhoneSignIn" component={PhoneSignInScreen} options={{ headerShown: false }} />
-          <Stack.Screen name="AppleSignIn" component={AppleSignInScreen} options={{ headerShown: false }} />
-          <Stack.Screen name="GoogleSignIn" component={GoogleSignInScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="AuthCallback" component={AuthCallbackScreen} options={{ headerShown: false }} />
-
-          {/* Details */}
-          <Stack.Screen name="RestaurantDetail" component={RestaurantDetailScreen} options={{ title: '餐廳詳情' }} />
-          <Stack.Screen name="Booking" component={BookingScreen} options={{ title: '預訂' }} />
-          <Stack.Screen name="RestaurantMap" component={RestaurantMapScreen} options={{ title: '地圖' }} />
-          <Stack.Screen name="ModifyBooking" component={ModifyBookingScreen} options={{ title: '修改預訂' }} />
-          <Stack.Screen name="PaymentResult" component={PaymentResultScreen} options={{ title: '支付結果' }} />
-          <Stack.Screen name="Reviews" component={ReviewsScreen} options={{ title: '評價' }} />
+    <>
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor={colors.background.primary}
+        translucent={false}
+      />
+      <NavigationContainer>
+        <Stack.Navigator
+          screenOptions={{
+            headerShown: false,
+            animation: 'slide_from_right',
+          }}
+        >
+          {session ? (
+            <>
+              <Stack.Screen name="MainTabs" component={MainTabs} />
+              <Stack.Screen
+                name="RestaurantDetail"
+                component={RestaurantDetailScreen}
+                options={{ animation: 'slide_from_bottom' }}
+              />
+              <Stack.Screen
+                name="Booking"
+                component={BookingScreen}
+                options={{ animation: 'slide_from_bottom' }}
+              />
+            </>
+          ) : (
+            <Stack.Screen name="Auth" component={AuthScreen} />
+          )}
         </Stack.Navigator>
-        </NavigationContainer>
-      </LanguageProvider>
-    {/* </StripeProvider> */}
+      </NavigationContainer>
+
+      {/* Mandatory Review Modal */}
+      <MandatoryReviewModal
+        visible={showReviewModal}
+        pendingReview={pendingReview}
+        onComplete={handleReviewComplete}
+      />
+    </>
   );
 }

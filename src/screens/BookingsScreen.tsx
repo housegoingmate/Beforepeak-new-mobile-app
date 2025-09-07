@@ -42,7 +42,7 @@ export default function BookingsScreen() {
 
   useEffect(() => {
     if (!authLoading) loadBookings();
-  }, [authLoading, userId]);
+  }, [authLoading, userId, loadBookings]);
 
   const onCancel = async (booking: any) => {
     Alert.alert('取消預訂', '確定要取消這個預訂嗎？退款將以帳戶積分形式發放。', [

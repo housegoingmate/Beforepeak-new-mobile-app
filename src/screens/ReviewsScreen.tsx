@@ -3,7 +3,7 @@ import { ScrollView, Text, StyleSheet, View, TouchableOpacity, TextInput, Alert,
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useAuth } from '../hooks/useAuth';
 import { listReviews, createReview } from '../services/ReviewsService';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import { MaterialIcons as Icon } from '@expo/vector-icons';
 
 function StarRating({ rating, onRate, size = 20 }: { rating: number; onRate?: (r: number) => void; size?: number }) {
   return (
