@@ -20,6 +20,7 @@ import { colors, typography, spacing, borderRadius, commonStyles } from '../them
 import { UIRestaurant } from '../types/database';
 import { fetchPopularRestaurants, fetchNearbyRestaurants } from '../services/restaurants';
 import { hapticFeedback } from '../utils/haptics';
+import { supabase } from '../lib/supabase';
 
 export const HomeScreen: React.FC = () => {
   const { t } = useTranslation();
@@ -29,9 +30,21 @@ export const HomeScreen: React.FC = () => {
   const [nearbyRestaurants, setNearbyRestaurants] = useState<UIRestaurant[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [isAuthed, setIsAuthed] = useState(false);
 
   useEffect(() => {
     loadData();
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (mounted) setIsAuthed(!!session);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
+      if (mounted) setIsAuthed(!!session);
+    });
+    return () => subscription.unsubscribe();
   }, []);
 
   const loadData = async () => {
@@ -103,6 +116,11 @@ export const HomeScreen: React.FC = () => {
       >
         {/* Header */}
         <View style={styles.header}>
+          {!isAuthed && (
+            <TouchableOpacity style={styles.authButton} onPress={() => navigation.navigate('Auth')}>
+              <Text style={styles.authButtonText}>Sign In / Sign Up</Text>
+            </TouchableOpacity>
+          )}
           <Text style={styles.title}>{t('home.title')}</Text>
           <Text style={styles.subtitle}>{t('home.subtitle')}</Text>
         </View>
@@ -211,6 +229,22 @@ const styles = StyleSheet.create({
     ...typography.body1,
     color: colors.text.secondary,
     textAlign: 'center',
+  },
+  authButton: {
+    position: 'absolute',
+    right: spacing.lg,
+    top: spacing.sm,
+    paddingVertical: 6,
+    paddingHorizontal: spacing.md,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.primary.purple,
+    backgroundColor: colors.background.primary,
+  },
+  authButtonText: {
+    ...typography.caption,
+    color: colors.primary.purple,
+    fontWeight: '600',
   },
   searchContainer: {
     flexDirection: 'row',

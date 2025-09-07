@@ -42,7 +42,7 @@ const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
 // Main Tab Navigator
-function MainTabs() {
+function MainTabs({ isAuthenticated }: { isAuthenticated: boolean }) {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -97,11 +97,13 @@ function MainTabs() {
         component={MapScreen}
         options={{ tabBarLabel: 'Map' }}
       />
-      <Tab.Screen
-        name="Bookings"
-        component={BookingsScreen}
-        options={{ tabBarLabel: 'Bookings' }}
-      />
+      {isAuthenticated && (
+        <Tab.Screen
+          name="Bookings"
+          component={BookingsScreen}
+          options={{ tabBarLabel: 'Bookings' }}
+        />
+      )}
       <Tab.Screen
         name="Profile"
         component={ProfileScreen}
@@ -189,23 +191,20 @@ export default function App() {
             animation: 'slide_from_right',
           }}
         >
-          {session ? (
-            <>
-              <Stack.Screen name="MainTabs" component={MainTabs} />
-              <Stack.Screen
-                name="RestaurantDetail"
-                component={RestaurantDetailScreen}
-                options={{ animation: 'slide_from_bottom' }}
-              />
-              <Stack.Screen
-                name="Booking"
-                component={BookingScreen}
-                options={{ animation: 'slide_from_bottom' }}
-              />
-            </>
-          ) : (
-            <Stack.Screen name="Auth" component={AuthScreen} />
-          )}
+          <Stack.Screen name="MainTabs">
+            {() => <MainTabs isAuthenticated={!!session} />}
+          </Stack.Screen>
+          <Stack.Screen
+            name="RestaurantDetail"
+            component={RestaurantDetailScreen}
+            options={{ animation: 'slide_from_bottom' }}
+          />
+          <Stack.Screen
+            name="Booking"
+            component={BookingScreen}
+            options={{ animation: 'slide_from_bottom' }}
+          />
+          <Stack.Screen name="Auth" component={AuthScreen} />
         </Stack.Navigator>
       </NavigationContainer>
 

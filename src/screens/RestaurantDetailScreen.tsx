@@ -21,6 +21,7 @@ import { UIRestaurant, DayAvailability } from '../types/database';
 import { fetchRestaurant, fetchRestaurantAvailability } from '../services/restaurants';
 import { hapticFeedback } from '../utils/haptics';
 import { formatRating, formatReviewCount, formatTime, formatDate } from '../utils/formatting';
+import { supabase } from '../lib/supabase';
 
 const { width } = Dimensions.get('window');
 
@@ -85,22 +86,30 @@ export const RestaurantDetailScreen: React.FC = () => {
     }
   };
 
-  const handleBookNow = () => {
-    if (restaurant) {
-      hapticFeedback.medium();
-      navigation.navigate('Booking', { restaurant });
+  const handleBookNow = async () => {
+    if (!restaurant) return;
+    hapticFeedback.medium();
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      navigation.navigate('Auth');
+      return;
     }
+    navigation.navigate('Booking', { restaurant });
   };
 
-  const handleTimeSlotPress = (dayAvailability: DayAvailability, slotId: string) => {
-    if (restaurant) {
-      hapticFeedback.light();
-      navigation.navigate('Booking', {
-        restaurant,
-        selectedDate: dayAvailability.date,
-        selectedTimeSlot: slotId
-      });
+  const handleTimeSlotPress = async (dayAvailability: DayAvailability, slotId: string) => {
+    if (!restaurant) return;
+    hapticFeedback.light();
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      navigation.navigate('Auth');
+      return;
     }
+    navigation.navigate('Booking', {
+      restaurant,
+      selectedDate: dayAvailability.date,
+      selectedTimeSlot: slotId
+    });
   };
 
   if (!restaurant) {
