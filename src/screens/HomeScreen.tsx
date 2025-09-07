@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   FlatList,
   RefreshControl,
+  Image,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,6 +22,16 @@ import { UIRestaurant } from '../types/database';
 import { fetchPopularRestaurants, fetchNearbyRestaurants } from '../services/restaurants';
 import { hapticFeedback } from '../utils/haptics';
 import { supabase } from '../lib/supabase';
+// Optional app logo (drop file at mobile-app/beforepeak/assets/beforepeak-logo.png)
+let logoSource: any | null = null;
+try {
+  // Keep path static for Metro bundler
+  // @ts-ignore - asset may not exist yet
+  logoSource = require('../../assets/beforepeak-logo.png');
+} catch (e) {
+  logoSource = null;
+}
+
 
 export const HomeScreen: React.FC = () => {
   const { t } = useTranslation();
@@ -101,7 +112,7 @@ export const HomeScreen: React.FC = () => {
   };
   const handleDistrictSelect = (district: string) => {
     hapticFeedback.selection();
-    navigation.navigate('Restaurants', { searchQuery: district });
+    navigation.navigate('Restaurants', { district });
   };
 
   const renderRestaurantItem = ({ item }: { item: UIRestaurant }) => (
@@ -178,7 +189,11 @@ export const HomeScreen: React.FC = () => {
         <View style={styles.promoBanner}>
           <View style={styles.promoLeft}>
             <View style={styles.logoBadge}>
-              <Ionicons name="restaurant" size={18} color={colors.text.inverse} />
+              {logoSource ? (
+                <Image source={logoSource} style={styles.logoImage} resizeMode="contain" />
+              ) : (
+                <Ionicons name="restaurant" size={18} color={colors.text.inverse} />
+              )}
             </View>
             <View>
               <Text style={styles.promoTitle}>Up to 50% OFF</Text>
@@ -306,6 +321,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  logoImage: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+  },
+
   promoTitle: {
     ...typography.h5,
     color: colors.primary.purple,

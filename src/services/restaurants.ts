@@ -28,6 +28,10 @@ export const fetchRestaurants = async (filters: SearchFilters = {}): Promise<UIR
       query = query.in('territory', filters.territory);
     }
 
+    if (filters.district && filters.district.length > 0) {
+      query = query.in('district', filters.district);
+    }
+
     if (filters.rating_min) {
       query = query.gte('average_rating', filters.rating_min);
     }

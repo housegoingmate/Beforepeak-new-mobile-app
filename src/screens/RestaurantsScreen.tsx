@@ -55,6 +55,7 @@ export const RestaurantsScreen: React.FC = () => {
     query: '',
     cuisine_type: [],
     territory: [],
+    district: [],
     rating_min: 0,
     discount_min: 0,
     sort_by: 'rating',
@@ -78,6 +79,10 @@ export const RestaurantsScreen: React.FC = () => {
     if (params?.territory) {
       const territories = Array.isArray(params.territory) ? params.territory : [params.territory];
       setFilters(prev => ({ ...prev, territory: territories }));
+    }
+    if (params?.district) {
+      const districts = Array.isArray(params.district) ? params.district : [params.district];
+      setFilters(prev => ({ ...prev, district: districts }));
     }
 
     loadRestaurants();

@@ -154,6 +154,7 @@ export interface SearchFilters {
   query?: string;
   cuisine_type?: string[];
   territory?: string[];
+  district?: string[]; // canonical district names from Supabase
   price_range?: string[];
   rating_min?: number;
   discount_min?: number;
