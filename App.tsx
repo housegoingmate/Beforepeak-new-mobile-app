@@ -22,6 +22,8 @@ import { BookingsScreen } from './src/screens/BookingsScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
 import { MapScreen } from './src/screens/MapScreen';
 import { LoadingScreen } from './src/screens/LoadingScreen';
+import ReviewsScreen from './src/screens/ReviewsScreen';
+import FavoritesScreen from './src/screens/FavoritesScreen';
 
 // Import services
 import { supabase } from './src/lib/supabase';
@@ -204,6 +206,8 @@ export default function App() {
             component={BookingScreen}
             options={{ animation: 'slide_from_bottom' }}
           />
+          <Stack.Screen name="Reviews" component={ReviewsScreen} />
+          <Stack.Screen name="Favorites" component={FavoritesScreen} />
           <Stack.Screen name="Auth" component={AuthScreen} />
         </Stack.Navigator>
       </NavigationContainer>

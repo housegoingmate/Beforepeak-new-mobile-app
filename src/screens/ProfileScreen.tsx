@@ -69,8 +69,8 @@ export const ProfileScreen: React.FC = () => {
 
   const handleFavorites = () => {
     hapticFeedback.light();
-    // TODO: Navigate to favorites screen
-    Alert.alert('Coming Soon', 'Favorites will be available soon');
+    // @ts-ignore
+    navigation.navigate('Favorites');
   };
 
   const handlePaymentMethods = () => {

@@ -22,6 +22,7 @@ import { UIRestaurant } from '../types/database';
 import { fetchPopularRestaurants, fetchNearbyRestaurants, fetchDistinctTerritories, fetchDistinctDistricts, fetchTopRatedRestaurants, fetchMostReviewedRestaurants, fetchNewThisWeekRestaurants, fetchTonightOnlyRestaurants, fetchFillingFastRestaurants } from '../services/restaurants';
 import { hapticFeedback } from '../utils/haptics';
 import { supabase } from '../lib/supabase';
+import { toggleFavorite } from '../services/FavoritesService';
 // Optional app logo (drop file at mobile-app/beforepeak/assets/beforepeak-logo.png)
 let logoSource: any | null = null;
 try {
@@ -137,11 +138,32 @@ export const HomeScreen: React.FC = () => {
     navigation.navigate('Restaurants', { district });
   };
 
+  // Favorites
+  const handleToggleFavorite = async (restaurantId: string) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return navigation.navigate('Auth' as never);
+    try {
+      const newState = await toggleFavorite(restaurantId);
+      const toggleOnList = (list: UIRestaurant[]) =>
+        list.map(r => (r.id === restaurantId ? { ...r, is_favorite: newState } : r));
+      setPopularRestaurants(prev => toggleOnList(prev));
+      setNearbyRestaurants(prev => toggleOnList(prev));
+      setTopRated(prev => toggleOnList(prev));
+      setMostReviewed(prev => toggleOnList(prev));
+      setNewThisWeek(prev => toggleOnList(prev));
+      setTonightOnly(prev => toggleOnList(prev));
+      setFillingFast(prev => toggleOnList(prev));
+    } catch (e) {
+      console.warn('toggle favorite failed', e);
+    }
+  };
+
   const renderRestaurantItem = ({ item }: { item: UIRestaurant }) => (
     <View style={styles.restaurantItem}>
       <RestaurantCard
         restaurant={item}
         onPress={handleRestaurantPress}
+        onFavorite={handleToggleFavorite}
         showDistance={true}
       />
     </View>
