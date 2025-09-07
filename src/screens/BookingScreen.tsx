@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -52,9 +52,9 @@ export const BookingScreen: React.FC = () => {
         setSelectedTimeSlot(params.selectedTimeSlot);
       }
     }
-  }, [route.params]);
+  }, [route.params, loadAvailability]);
 
-  const loadAvailability = async (restaurantId: string) => {
+  const loadAvailability = useCallback(async (restaurantId: string) => {
     try {
       const data = await fetchRestaurantAvailability(restaurantId, 14);
       setAvailability(data);
@@ -69,7 +69,7 @@ export const BookingScreen: React.FC = () => {
     } catch (error) {
       console.error('Error loading availability:', error);
     }
-  };
+  }, [selectedDate]);
 
   const handleBack = () => {
     hapticFeedback.light();

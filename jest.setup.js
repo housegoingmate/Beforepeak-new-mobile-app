@@ -1,4 +1,4 @@
-try { const m = 'react-native-gesture-handler/jestSetup'; require(m); } catch {}
+try { const m = 'react-native-gesture-handler/jestSetup'; require(m); } catch (e) { /* ignore for Snack */ }
 
 
 jest.mock('react-native-reanimated', () => {

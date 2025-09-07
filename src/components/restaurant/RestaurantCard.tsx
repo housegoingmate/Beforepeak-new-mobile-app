@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,7 +10,7 @@ import {
 import { Image } from 'react-native';
 let FastImage: any = Image as any;
 try {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
+
   FastImage = require('react-native-fast-image');
 } catch (e) {
   // Fallback remains Image
@@ -46,9 +46,9 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
 
   useEffect(() => {
     loadAvailability();
-  }, [restaurant.id]);
+  }, [restaurant.id, loadAvailability]);
 
-  const loadAvailability = async () => {
+  const loadAvailability = useCallback(async () => {
     try {
       setIsLoadingAvailability(true);
       const data = await fetchRestaurantAvailability(restaurant.id, 3);
@@ -58,7 +58,7 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
     } finally {
       setIsLoadingAvailability(false);
     }
-  };
+  }, [restaurant.id]);
 
   const handlePress = () => {
     hapticFeedback.medium();

@@ -1,7 +1,7 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 let RNLocalize: any = {};
-try { const mod = 'react-native-localize'; RNLocalize = require(mod); } catch {}
+try { const mod = 'react-native-localize'; RNLocalize = require(mod); } catch (e) { /* ignore for Snack */ }
 
 
 export type AppLanguage = 'en' | 'zh-HK';
