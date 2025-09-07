@@ -81,6 +81,7 @@ export const Button: React.FC<ButtonProps> = ({
   );
 };
 
+/* eslint-disable react-native/no-unused-styles */
 const styles = StyleSheet.create({
   base: {
     flexDirection: 'row',
@@ -162,3 +163,4 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
 });
+/* eslint-enable react-native/no-unused-styles */

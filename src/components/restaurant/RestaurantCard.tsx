@@ -109,7 +109,7 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
           <Ionicons
             name={restaurant.is_favorite ? 'heart' : 'heart-outline'}
             size={20}
-            color={restaurant.is_favorite ? colors.error.500 : colors.text.inverse}
+            color={restaurant.is_favorite ? colors.error['500'] : colors.text.inverse}
           />
         </TouchableOpacity>
       </View>
@@ -147,7 +147,7 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
         {/* Availability */}
         {!isLoadingAvailability && nextAvailableSlot && (
           <View style={styles.availability}>
-            <Ionicons name="time" size={12} color={colors.success.600} />
+            <Ionicons name="time" size={12} color={colors.success['600']} />
             <Text style={styles.availabilityText}>
               Next available: Today {nextAvailableSlot.time}
             </Text>
@@ -193,7 +193,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: spacing.sm,
     left: spacing.sm,
-    backgroundColor: colors.warning.500,
+    backgroundColor: colors.warning['500'],
     paddingHorizontal: spacing.sm,
     paddingVertical: 4,
     borderRadius: borderRadius.sm,
@@ -269,13 +269,13 @@ const styles = StyleSheet.create({
   },
   availabilityText: {
     ...typography.caption,
-    color: colors.success.600,
+    color: colors.success['600'],
     marginLeft: 4,
     flex: 1,
   },
   discountSmall: {
     ...typography.caption,
-    color: colors.warning.600,
+    color: colors.warning['600'],
     fontWeight: '600',
   },
   quickBookButton: {

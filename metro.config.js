@@ -1,4 +1,9 @@
-const {getDefaultConfig, mergeConfig} = require('@react-native/metro-config');
+let getDefaultConfig, mergeConfig;
+try { const pkg = '@react-native/metro-config'; ({getDefaultConfig, mergeConfig} = require(pkg)); } catch (e) {
+  // Snack environment: metro config package may be absent. Export empty config.
+  module.exports = {};
+  return;
+}
 
 /**
  * Metro configuration

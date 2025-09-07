@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { ScrollView, Text, StyleSheet, View, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
 import { useAuth } from '../hooks/useAuth';
 import { myBookings, Booking, cancelBooking } from '../services/BookingService';
@@ -28,7 +28,7 @@ export default function BookingsScreen() {
   const [loading, setLoading] = useState(true);
   const [bookings, setBookings] = useState<any[]>([]);
 
-  const loadBookings = async () => {
+  const loadBookings = useCallback(async () => {
     if (!userId) return;
     try {
       const data = await myBookings(userId);
@@ -38,7 +38,7 @@ export default function BookingsScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId]);
 
   useEffect(() => {
     if (!authLoading) loadBookings();

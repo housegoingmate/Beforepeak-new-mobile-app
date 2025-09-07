@@ -132,7 +132,7 @@ export const RestaurantDetailScreen: React.FC = () => {
             <Ionicons
               name={isFavorite ? 'heart' : 'heart-outline'}
               size={20}
-              color={isFavorite ? colors.error.500 : colors.text.primary}
+              color={isFavorite ? colors.error['500'] : colors.text.primary}
             />
           </TouchableOpacity>
         </View>
@@ -298,7 +298,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: spacing.lg,
     left: spacing.lg,
-    backgroundColor: colors.warning.500,
+    backgroundColor: colors.warning['500'],
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: borderRadius.sm,
@@ -426,7 +426,7 @@ const styles = StyleSheet.create({
   },
   discountSmall: {
     ...typography.overline,
-    color: colors.warning.600,
+    color: colors.warning['600'],
     fontSize: 10,
   },
   bottomAction: {

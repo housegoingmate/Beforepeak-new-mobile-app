@@ -5,7 +5,8 @@ import { initReactI18next } from 'react-i18next';
 let deviceLocale = 'en';
 try {
 
-  const { getLocales } = require('react-native-localize');
+  const mod = 'react-native-localize';
+  const { getLocales } = require(mod);
   deviceLocale = getLocales?.()[0]?.languageCode || 'en';
 } catch (e) {
   deviceLocale = 'en';

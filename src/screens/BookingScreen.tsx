@@ -343,7 +343,7 @@ export const BookingScreen: React.FC = () => {
   const renderConfirmationStep = () => (
     <View style={styles.confirmationContainer}>
       <View style={styles.successIcon}>
-        <Ionicons name="checkmark-circle" size={48} color={colors.success.500} />
+        <Ionicons name="checkmark-circle" size={48} color={colors.success['500']} />
       </View>
       <Text style={styles.confirmationTitle}>Booking Confirmed!</Text>
       <Text style={styles.confirmationText}>
@@ -558,7 +558,7 @@ const styles = StyleSheet.create({
   },
   discountText: {
     ...typography.overline,
-    color: colors.warning.600,
+    color: colors.warning['600'],
     fontSize: 10,
   },
   partySizeContainer: {
@@ -683,7 +683,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: colors.success.50,
+    backgroundColor: colors.success['50'],
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.lg,

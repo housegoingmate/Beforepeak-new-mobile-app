@@ -212,7 +212,7 @@ export const ProfileScreen: React.FC = () => {
             variant="secondary"
             loading={loading}
             style={styles.signOutButton}
-            icon={<Ionicons name="log-out-outline" size={20} color={colors.error.500} />}
+            icon={<Ionicons name="log-out-outline" size={20} color={colors.error['500']} />}
             textStyle={styles.signOutText}
           />
         </View>
@@ -333,10 +333,10 @@ const styles = StyleSheet.create({
     marginLeft: spacing.sm,
   },
   signOutButton: {
-    borderColor: colors.error.500,
+    borderColor: colors.error['500'],
   },
   signOutText: {
-    color: colors.error.500,
+    color: colors.error['500'],
   },
   appInfo: {
     alignItems: 'center',

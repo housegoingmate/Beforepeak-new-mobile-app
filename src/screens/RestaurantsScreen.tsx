@@ -77,9 +77,9 @@ export const RestaurantsScreen: React.FC = () => {
     }
 
     loadRestaurants();
-  }, [route.params]);
+  }, [route.params, loadRestaurants]);
 
-  const loadRestaurants = async () => {
+  const loadRestaurants = useCallback(async () => {
     try {
       setLoading(true);
       const data = await fetchRestaurants(filters);
@@ -89,13 +89,13 @@ export const RestaurantsScreen: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
     await loadRestaurants();
     setRefreshing(false);
-  }, [filters, loadRestaurants]);
+  }, [loadRestaurants]);
 
   const handleSearch = useCallback(async () => {
     if (searchQuery.trim()) {

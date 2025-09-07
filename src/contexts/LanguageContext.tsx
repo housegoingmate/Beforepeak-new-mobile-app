@@ -23,7 +23,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         const lng = (stored as AppLanguage) || (i18n.language?.startsWith('zh') ? 'zh-HK' : 'en');
         setLanguageState(lng);
         if (i18n.language !== lng) i18n.changeLanguage(lng);
-      } catch {}
+      } catch (e) { /* ignore */ }
     })();
   }, []);
 

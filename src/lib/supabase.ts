@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 // Optional polyfill; guard for Snack
-try { require('react-native-url-polyfill/auto'); } catch (e) { /* noop for Snack */ }
+try { const m = 'react-native-url-polyfill/auto'; require(m); } catch (e) { /* noop for Snack */ }
 import { storage } from './storage';
 
 const supabaseUrl = 'https://upnqezwtiehbvyurguja.supabase.co';

@@ -79,3 +79,13 @@ yarn-error.log
 .app-build/
 .modules-build/
 android/.cxx/
+
+
+# Expo Snack preview: keep native projects local only
+android/
+ios/
+# Secrets
+android/app/google-services.json
+.env
+.expo/*
+.expo-shared/*

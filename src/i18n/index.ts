@@ -1,6 +1,8 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
-import * as RNLocalize from 'react-native-localize';
+let RNLocalize: any = {};
+try { const mod = 'react-native-localize'; RNLocalize = require(mod); } catch {}
+
 
 export type AppLanguage = 'en' | 'zh-HK';
 
