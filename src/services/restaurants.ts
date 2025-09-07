@@ -155,7 +155,7 @@ export const fetchRestaurantAvailability = async (
 
     // Group by date and transform to UI format
     const availabilityMap = new Map<string, AvailabilitySlot[]>();
-    
+
     (data || []).forEach(timeWindow => {
       const slots = availabilityMap.get(timeWindow.date) || [];
       slots.push({
@@ -172,12 +172,12 @@ export const fetchRestaurantAvailability = async (
     // Create day availability array
     const availability: DayAvailability[] = [];
     const today = new Date();
-    
+
     for (let i = 0; i < days; i++) {
       const date = new Date(today);
       date.setDate(today.getDate() + i);
       const dateString = date.toISOString().split('T')[0];
-      
+
       availability.push({
         date: dateString,
         day_name: date.toLocaleDateString('en-US', { weekday: 'short' }),
@@ -207,7 +207,145 @@ const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: numbe
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   const d = R * c; // Distance in kilometers
   return Math.round(d * 10) / 10; // Round to 1 decimal place
+}
+
+// Distinct filter values
+export const fetchDistinctTerritories = async (): Promise<string[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('restaurants')
+      .select('territory', { distinct: true })
+      .order('territory');
+    if (error) throw error;
+    return (data || [])
+      .map((r: any) => r.territory)
+      .filter((v: string | null) => !!v);
+  } catch (e) {
+    console.error('fetchDistinctTerritories error', e);
+    return [];
+  }
 };
+
+export const fetchDistinctDistricts = async (): Promise<string[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('restaurants')
+      .select('district', { distinct: true })
+      .order('district');
+    if (error) throw error;
+    return (data || [])
+      .map((r: any) => r.district)
+      .filter((v: string | null) => !!v);
+  } catch (e) {
+    console.error('fetchDistinctDistricts error', e);
+    return [];
+  }
+};
+
+// Curated rails
+export const fetchTopRatedRestaurants = async (limit = 10) => {
+  return fetchRestaurants({ sort_by: 'rating' }).then(list => list.slice(0, limit));
+};
+
+export const fetchMostReviewedRestaurants = async (limit = 10) => {
+  try {
+    let query = supabase
+      .from('restaurants')
+      .select('*')
+      .eq('is_active', true)
+      .eq('is_verified', true)
+      .order('total_reviews', { ascending: false })
+      .limit(limit);
+    const { data, error } = await query;
+    if (error) throw error;
+    return (data || []) as any;
+  } catch (e) {
+    console.error('fetchMostReviewedRestaurants error', e);
+    return [];
+  }
+};
+
+export const fetchNewThisWeekRestaurants = async (limit = 10) => {
+  try {
+    const since = new Date();
+    since.setDate(since.getDate() - 7);
+    const sinceIso = since.toISOString();
+    const { data, error } = await supabase
+      .from('restaurants')
+      .select('*')
+      .eq('is_active', true)
+      .eq('is_verified', true)
+      .gte('created_at', sinceIso)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    if (error) throw error;
+    return (data || []) as any;
+  } catch (e) {
+    console.error('fetchNewThisWeekRestaurants error', e);
+    return [];
+  }
+};
+
+// Urgency rails
+export const fetchTonightOnlyRestaurants = async (limit = 10) => {
+  try {
+    const today = new Date();
+    const dateStr = today.toISOString().split('T')[0];
+    const nowHHMM = today.toTimeString().slice(0,5);
+    const { data: windows, error } = await supabase
+      .from('time_windows')
+      .select('restaurant_id,start_time,is_active,discount_percentage')
+      .eq('is_active', true)
+      .eq('date', dateStr)
+      .gt('start_time', nowHHMM)
+      .order('start_time');
+    if (error) throw error;
+    const ids = Array.from(new Set((windows || []).map((w: any) => w.restaurant_id))).slice(0, 50);
+    if (ids.length === 0) return [];
+    const { data: rests, error: rerr } = await supabase
+      .from('restaurants')
+      .select('*')
+      .in('id', ids)
+      .eq('is_active', true)
+      .eq('is_verified', true)
+      .limit(limit);
+    if (rerr) throw rerr;
+    return (rests || []) as any;
+  } catch (e) {
+    console.error('fetchTonightOnlyRestaurants error', e);
+    return [];
+  }
+};
+
+export const fetchFillingFastRestaurants = async (limit = 10) => {
+  try {
+    const today = new Date();
+    const dateStr = today.toISOString().split('T')[0];
+    const { data: windows, error } = await supabase
+      .from('time_windows')
+      .select('restaurant_id,max_capacity,current_bookings,is_active')
+      .eq('is_active', true)
+      .eq('date', dateStr)
+      .limit(200);
+    if (error) throw error;
+    const tight = (windows || []).filter((w: any) => (w.max_capacity - w.current_bookings) <= 2);
+    const ids = Array.from(new Set(tight.map((w: any) => w.restaurant_id))).slice(0, 50);
+    if (ids.length === 0) return [];
+    const { data: rests, error: rerr } = await supabase
+      .from('restaurants')
+      .select('*')
+      .in('id', ids)
+      .eq('is_active', true)
+      .eq('is_verified', true)
+      .limit(limit);
+    if (rerr) throw rerr;
+    return (rests || []) as any;
+  } catch (e) {
+    console.error('fetchFillingFastRestaurants error', e);
+    return [];
+  }
+};
+
 
 const deg2rad = (deg: number): number => {
   return deg * (Math.PI / 180);

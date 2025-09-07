@@ -19,7 +19,7 @@ import { RestaurantCard } from '../components/restaurant/RestaurantCard';
 import { Button } from '../components/ui/Button';
 import { colors, typography, spacing, borderRadius, commonStyles } from '../theme';
 import { UIRestaurant } from '../types/database';
-import { fetchPopularRestaurants, fetchNearbyRestaurants } from '../services/restaurants';
+import { fetchPopularRestaurants, fetchNearbyRestaurants, fetchDistinctTerritories, fetchDistinctDistricts, fetchTopRatedRestaurants, fetchMostReviewedRestaurants, fetchNewThisWeekRestaurants, fetchTonightOnlyRestaurants, fetchFillingFastRestaurants } from '../services/restaurants';
 import { hapticFeedback } from '../utils/haptics';
 import { supabase } from '../lib/supabase';
 // Optional app logo (drop file at mobile-app/beforepeak/assets/beforepeak-logo.png)
@@ -42,6 +42,14 @@ export const HomeScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [isAuthed, setIsAuthed] = useState(false);
+  const [territoryOptions, setTerritoryOptions] = useState<string[]>([]);
+  const [districtOptions, setDistrictOptions] = useState<string[]>([]);
+  const [topRated, setTopRated] = useState<UIRestaurant[]>([]);
+  const [mostReviewed, setMostReviewed] = useState<UIRestaurant[]>([]);
+  const [newThisWeek, setNewThisWeek] = useState<UIRestaurant[]>([]);
+  const [tonightOnly, setTonightOnly] = useState<UIRestaurant[]>([]);
+  const [fillingFast, setFillingFast] = useState<UIRestaurant[]>([]);
+
 
   useEffect(() => {
     loadData();
@@ -60,13 +68,27 @@ export const HomeScreen: React.FC = () => {
 
   const loadData = async () => {
     try {
-      const [popular, nearby] = await Promise.all([
+      const [popular, nearby, terr, dist, top, most, recent, tonight, fast] = await Promise.all([
         fetchPopularRestaurants(),
         fetchNearbyRestaurants(22.3193, 114.1694), // Hong Kong coordinates
+        fetchDistinctTerritories(),
+        fetchDistinctDistricts(),
+        fetchTopRatedRestaurants(8),
+        fetchMostReviewedRestaurants(8),
+        fetchNewThisWeekRestaurants(8),
+        fetchTonightOnlyRestaurants(8),
+        fetchFillingFastRestaurants(8),
       ]);
 
       setPopularRestaurants(popular.slice(0, 5));
       setNearbyRestaurants(nearby.slice(0, 5));
+      setTerritoryOptions(terr);
+      setDistrictOptions(dist);
+      setTopRated(top);
+      setMostReviewed(most);
+      setNewThisWeek(recent);
+      setTonightOnly(tonight);
+      setFillingFast(fast);
     } catch (error) {
       console.error('Error loading home data:', error);
     } finally {
@@ -206,7 +228,129 @@ export const HomeScreen: React.FC = () => {
           >
             <Text style={styles.promoCtaText}>Explore deals</Text>
           </TouchableOpacity>
+            <View style={styles.trustRow}>
+              <Ionicons name="wallet" size={16} color={colors.text.inverse} />
+              <Text style={styles.trustText}> PayMe ready</Text>
+            </View>
+
         </View>
+        {/* How it works */}
+        <View style={styles.sectionCompact}>
+          <View style={styles.howRow}>
+            <View style={styles.howItem}>
+              <Ionicons name="search" size={18} color={colors.primary.purple} />
+              <Text style={styles.howText}>Find a non-peak slot</Text>
+            </View>
+            <View style={styles.howItem}>
+              <Ionicons name="pricetag" size={18} color={colors.primary.purple} />
+              <Text style={styles.howText}>Enjoy up to 50% off</Text>
+            </View>
+            <View style={styles.howItem}>
+              <Ionicons name="card" size={18} color={colors.primary.purple} />
+              <Text style={styles.howText}>Book with small fee</Text>
+            </View>
+          </View>
+
+        {/* Tonight only */}
+        {tonightOnly.length > 0 && (
+          <View className="section" style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Tonight only</Text>
+              <TouchableOpacity onPress={() => navigation.navigate('Restaurants', { date: new Date().toISOString().split('T')[0] })}>
+                <Text style={styles.viewAllText}>{t('home.viewAll')}</Text>
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              data={tonightOnly}
+              renderItem={renderRestaurantItem}
+              keyExtractor={(item) => item.id}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.horizontalList}
+            />
+          </View>
+        )}
+
+        {/* Filling fast */}
+        {fillingFast.length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Filling fast</Text>
+              <TouchableOpacity onPress={() => navigation.navigate('Restaurants', { sortBy: 'discount' })}>
+                <Text style={styles.viewAllText}>{t('home.viewAll')}</Text>
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              data={fillingFast}
+              renderItem={renderRestaurantItem}
+              keyExtractor={(item) => item.id}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.horizontalList}
+            />
+          </View>
+        )}
+
+        {/* Top rated */}
+        {topRated.length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Top rated</Text>
+              <TouchableOpacity onPress={() => navigation.navigate('Restaurants', { sortBy: 'rating' })}>
+                <Text style={styles.viewAllText}>{t('home.viewAll')}</Text>
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              data={topRated}
+              renderItem={renderRestaurantItem}
+              keyExtractor={(item) => item.id}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.horizontalList}
+            />
+          </View>
+        )}
+
+        {/* Most reviewed */}
+        {mostReviewed.length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Most reviewed</Text>
+              <TouchableOpacity onPress={() => navigation.navigate('Restaurants', { sortBy: 'rating' })}>
+                <Text style={styles.viewAllText}>{t('home.viewAll')}</Text>
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              data={mostReviewed}
+              renderItem={renderRestaurantItem}
+              keyExtractor={(item) => item.id}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.horizontalList}
+            />
+          </View>
+        )}
+
+        {/* New this week */}
+        {newThisWeek.length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>New this week</Text>
+              <TouchableOpacity onPress={() => navigation.navigate('Restaurants', { sortBy: 'newest' })}>
+                <Text style={styles.viewAllText}>{t('home.viewAll')}</Text>
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              data={newThisWeek}
+              renderItem={renderRestaurantItem}
+              keyExtractor={(item) => item.id}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.horizontalList}
+            />
+          </View>
+        )}
+
 
         {/* Quick Filters */}
         <View style={styles.section}>
@@ -214,14 +358,17 @@ export const HomeScreen: React.FC = () => {
             <Text style={styles.sectionTitle}>Quick Filters</Text>
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsRow}>
-            {['Hong Kong Island','Kowloon','New Territories'].map(t => (
+            <TouchableOpacity style={styles.chip} onPress={handleViewAllNearby}>
+              <Text style={styles.chipText}>Near me</Text>
+            </TouchableOpacity>
+            {(territoryOptions.length ? territoryOptions : ['Hong Kong Island','Kowloon','New Territories']).map(t => (
               <TouchableOpacity key={t} style={styles.chip} onPress={() => handleTerritorySelect(t)}>
                 <Text style={styles.chipText}>{t}</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsRowSecondary}>
-            {['Central','Tsim Sha Tsui','Mong Kok','Causeway Bay','Wan Chai','Sha Tin','Yuen Long','Tuen Mun'].map(d => (
+            {(districtOptions.length ? districtOptions.slice(0, 12) : ['Central','Tsim Sha Tsui','Mong Kok','Causeway Bay','Wan Chai','Sha Tin','Yuen Long','Tuen Mun']).map(d => (
               <TouchableOpacity key={d} style={styles.chipSecondary} onPress={() => handleDistrictSelect(d)}>
                 <Text style={styles.chipSecondaryText}>{d}</Text>
               </TouchableOpacity>
@@ -461,6 +608,39 @@ const styles = StyleSheet.create({
   },
   horizontalList: {
     paddingLeft: spacing.lg,
+  },
+  trustRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing.sm,
+  },
+  trustText: {
+    ...typography.caption,
+    color: colors.text.inverse,
+    fontWeight: '600',
+  },
+  sectionCompact: {
+    marginBottom: spacing.lg,
+    paddingHorizontal: spacing.lg,
+  },
+  howRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: spacing.xs,
+  },
+  howItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  howText: {
+    ...typography.caption,
+    color: colors.text.secondary,
+  },
+  learnMoreText: {
+    ...typography.caption,
+    color: colors.primary.purple,
+    fontWeight: '600',
   },
   restaurantItem: {
     marginRight: spacing.md,

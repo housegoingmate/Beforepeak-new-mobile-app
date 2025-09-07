@@ -70,13 +70,28 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
     onFavorite?.(restaurant.id);
   };
 
-  const featuredImage = restaurant.photos?.find(p => p.is_featured)?.url || 
-                       restaurant.photos?.[0]?.url || 
+  const featuredImage = restaurant.photos?.find(p => p.is_featured)?.url ||
+                       restaurant.photos?.[0]?.url ||
                        restaurant.image_url;
 
   const nextAvailableSlot = availability
     .find(day => !day.closed && day.slots.length > 0)
     ?.slots.find(slot => slot.is_available);
+
+  const minutesToNext = (() => {
+    try {
+      if (!nextAvailableSlot?.time) return null;
+      const now = new Date();
+      const [hh, mm] = nextAvailableSlot.time.split(':').map((n: string) => parseInt(n, 10));
+      const slotDate = new Date();
+      slotDate.setHours(hh, mm, 0, 0);
+      const diffMs = slotDate.getTime() - now.getTime();
+      const diffMin = Math.max(0, Math.round(diffMs / 60000));
+      return diffMin;
+    } catch { return null; }
+  })();
+
+  const seatsLeft = (nextAvailableSlot as any)?.available_count ?? null;
 
   return (
     <Card onPress={handlePress} padding={0} style={styles.card}>
@@ -90,13 +105,29 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
           style={styles.image}
           resizeMode={FastImage.resizeMode.cover}
         />
-        
+
         {/* Discount Badge */}
         {restaurant.discount_percentage && (
           <View style={styles.discountBadge}>
             <Text style={styles.discountText}>
               {restaurant.discount_percentage}% OFF
             </Text>
+          </View>
+        )}
+
+        {/* Countdown Badge */}
+        {typeof minutesToNext === 'number' && minutesToNext <= 120 && (
+          <View style={styles.timeBadge}>
+            <Ionicons name="time" size={12} color={colors.text.inverse} />
+            <Text style={styles.badgeText}> in {minutesToNext}m</Text>
+          </View>
+        )}
+
+        {/* Filling Fast Badge */}
+        {typeof seatsLeft === 'number' && seatsLeft <= 2 && (
+          <View style={styles.fastBadge}>
+            <Ionicons name="flame" size={12} color={colors.text.inverse} />
+            <Text style={styles.badgeText}> {seatsLeft} left</Text>
           </View>
         )}
 
@@ -202,6 +233,34 @@ const styles = StyleSheet.create({
     ...typography.overline,
     color: colors.text.inverse,
     fontWeight: '700',
+  },
+  timeBadge: {
+    position: 'absolute',
+    top: spacing.sm,
+    right: spacing.sm + 42, // leave room for favorite
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: borderRadius.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  fastBadge: {
+    position: 'absolute',
+    top: spacing.sm + 28,
+    right: spacing.sm + 42,
+    backgroundColor: colors.error['600'],
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: borderRadius.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  badgeText: {
+    ...typography.overline,
+    color: colors.text.inverse,
+    fontWeight: '700',
+    marginLeft: 4,
   },
   favoriteButton: {
     position: 'absolute',
