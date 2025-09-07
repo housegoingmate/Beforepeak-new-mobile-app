@@ -12,7 +12,10 @@ import {
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import FastImage from 'react-native-fast-image';
+// Safe image: try FastImage, fallback to RN Image (for Snack/web)
+import { Image as RNImage } from 'react-native';
+let FastImage: any = RNImage as any;
+try { FastImage = require('react-native-fast-image'); } catch (e) { FastImage.resizeMode = RNImage.resizeMode || { cover: 'cover' }; }
 
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
@@ -22,6 +25,8 @@ import { fetchRestaurant, fetchRestaurantAvailability } from '../services/restau
 import { hapticFeedback } from '../utils/haptics';
 import { formatRating, formatReviewCount, formatTime, formatDate } from '../utils/formatting';
 import { supabase } from '../lib/supabase';
+import { isFavorite as isFav, toggleFavorite } from '../services/FavoritesService';
+import ReviewService from '../services/ReviewService';
 
 const { width } = Dimensions.get('window');
 
@@ -35,12 +40,28 @@ export const RestaurantDetailScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [reviewStats, setReviewStats] = useState<any | null>(null);
+  const [loadingStats, setLoadingStats] = useState(false);
 
   useEffect(() => {
     const params = route.params as any;
     if (params?.restaurant) {
       setRestaurant(params.restaurant);
       loadRestaurantDetails(params.restaurant.id);
+      // Load favorite state and review stats
+      (async () => {
+        try {
+          setLoadingStats(true);
+          const fav = await isFav(params.restaurant.id);
+          setIsFavorite(!!fav);
+          const stats = await ReviewService.getInstance().getReviewStats(params.restaurant.id);
+          setReviewStats(stats);
+        } catch (e) {
+          console.warn('detail preloads', e);
+        } finally {
+          setLoadingStats(false);
+        }
+      })();
     }
   }, [route.params]);
 
@@ -68,10 +89,20 @@ export const RestaurantDetailScreen: React.FC = () => {
     navigation.goBack();
   };
 
-  const handleFavorite = () => {
-    hapticFeedback.medium();
-    setIsFavorite(!isFavorite);
-    // TODO: Implement favorite functionality
+  const handleFavorite = async () => {
+    try {
+      hapticFeedback.medium();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        // @ts-ignore
+        navigation.navigate('Auth');
+        return;
+      }
+      const newState = await toggleFavorite((restaurant as any)?.id);
+      setIsFavorite(newState);
+    } catch (e: any) {
+      console.warn('favorite toggle failed', e?.message);
+    }
   };
 
   const handleShare = () => {
@@ -193,6 +224,25 @@ export const RestaurantDetailScreen: React.FC = () => {
 
           {restaurant.description && (
             <Text style={styles.description}>{restaurant.description}</Text>
+          )}
+
+          {/* Reviews Summary */}
+          {reviewStats && (
+            <Card style={styles.reviewsCard}>
+              <View style={styles.reviewsHeader}>
+                <View style={styles.reviewsScoreBox}>
+                  <Text style={styles.reviewsScoreText}>{reviewStats.averageRating?.toFixed(1) ?? '0.0'}</Text>
+                  <Text style={styles.reviewsCountText}>({reviewStats.totalReviews} reviews)</Text>
+                </View>
+                <TouchableOpacity onPress={() => navigation.navigate('Reviews' as never, { restaurant_id: restaurant.id } as never)}>
+                  <Text style={styles.viewAllText}>See all</Text>
+                </TouchableOpacity>
+              </View>
+              <View style={styles.aspectRow}><Text style={styles.aspectLabel}>Food</Text><View style={styles.aspectBar}><View style={[styles.aspectFill,{width:`${(reviewStats.aspectRatings.foodQuality||0)/5*100}%`}]} /></View></View>
+              <View style={styles.aspectRow}><Text style={styles.aspectLabel}>Service</Text><View style={styles.aspectBar}><View style={[styles.aspectFill,{width:`${(reviewStats.aspectRatings.service||0)/5*100}%`}]} /></View></View>
+              <View style={styles.aspectRow}><Text style={styles.aspectLabel}>Ambiance</Text><View style={styles.aspectBar}><View style={[styles.aspectFill,{width:`${(reviewStats.aspectRatings.ambiance||0)/5*100}%`}]} /></View></View>
+              <View style={styles.aspectRow}><Text style={styles.aspectLabel}>Value</Text><View style={styles.aspectBar}><View style={[styles.aspectFill,{width:`${(reviewStats.aspectRatings.valueForMoney||0)/5*100}%`}]} /></View></View>
+            </Card>
           )}
 
           {/* Contact Info */}
@@ -446,6 +496,52 @@ const styles = StyleSheet.create({
   },
   bookButton: {
     width: '100%',
+  },
+  reviewsCard: {
+    marginBottom: spacing.lg,
+    padding: spacing.md,
+  },
+  reviewsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
+  reviewsScoreBox: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: spacing.sm,
+  },
+  reviewsScoreText: {
+    ...typography.h4,
+    color: colors.text.primary,
+    fontWeight: '800',
+  },
+  reviewsCountText: {
+    ...typography.caption,
+    color: colors.text.tertiary,
+  },
+  aspectRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+    gap: spacing.sm,
+  },
+  aspectLabel: {
+    width: 70,
+    ...typography.caption,
+    color: colors.text.secondary,
+  },
+  aspectBar: {
+    flex: 1,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.background.tertiary,
+    overflow: 'hidden',
+  },
+  aspectFill: {
+    height: '100%',
+    backgroundColor: colors.primary.purple,
   },
 });
 

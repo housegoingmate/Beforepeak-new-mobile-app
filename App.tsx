@@ -22,6 +22,8 @@ import { BookingsScreen } from './src/screens/BookingsScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
 import { MapScreen } from './src/screens/MapScreen';
 import { LoadingScreen } from './src/screens/LoadingScreen';
+import ReviewsScreen from './src/screens/ReviewsScreen';
+import FavoritesScreen from './src/screens/FavoritesScreen';
 
 // Import services
 import { supabase } from './src/lib/supabase';
@@ -51,9 +53,9 @@ function MainTabs({ isAuthenticated }: { isAuthenticated: boolean }) {
           backgroundColor: colors.background.primary,
           borderTopWidth: 1,
           borderTopColor: colors.border.light,
-          height: componentSpacing.tabBarHeight,
-          paddingBottom: Platform.OS === 'ios' ? 20 : 10,
-          paddingTop: 10,
+          height: (componentSpacing.tabBarHeight || 60) + 10,
+          paddingBottom: Platform.OS === 'ios' ? 24 : 14,
+          paddingTop: 12,
         },
         tabBarActiveTintColor: colors.primary.purple,
         tabBarInactiveTintColor: colors.text.tertiary,
@@ -204,6 +206,8 @@ export default function App() {
             component={BookingScreen}
             options={{ animation: 'slide_from_bottom' }}
           />
+          <Stack.Screen name="Reviews" component={ReviewsScreen} />
+          <Stack.Screen name="Favorites" component={FavoritesScreen} />
           <Stack.Screen name="Auth" component={AuthScreen} />
         </Stack.Navigator>
       </NavigationContainer>
