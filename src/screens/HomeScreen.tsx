@@ -94,6 +94,16 @@ export const HomeScreen: React.FC = () => {
     navigation.navigate('Restaurants', { showRecommendations: true });
   };
 
+  // Quick filter helpers
+  const handleTerritorySelect = (territory: string) => {
+    hapticFeedback.selection();
+    navigation.navigate('Restaurants', { territory });
+  };
+  const handleDistrictSelect = (district: string) => {
+    hapticFeedback.selection();
+    navigation.navigate('Restaurants', { searchQuery: district });
+  };
+
   const renderRestaurantItem = ({ item }: { item: UIRestaurant }) => (
     <View style={styles.restaurantItem}>
       <RestaurantCard
@@ -164,6 +174,47 @@ export const HomeScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
 
+        {/* Promo banner */}
+        <View style={styles.promoBanner}>
+          <View style={styles.promoLeft}>
+            <View style={styles.logoBadge}>
+              <Ionicons name="restaurant" size={18} color={colors.text.inverse} />
+            </View>
+            <View>
+              <Text style={styles.promoTitle}>Up to 50% OFF</Text>
+              <Text style={styles.promoSubtitle}>during non-peak hours</Text>
+            </View>
+          </View>
+          <TouchableOpacity
+            style={styles.promoCta}
+            onPress={() => navigation.navigate('Restaurants', { sortBy: 'discount' })}
+          >
+            <Text style={styles.promoCtaText}>Explore deals</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Quick Filters */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Quick Filters</Text>
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsRow}>
+            {['Hong Kong Island','Kowloon','New Territories'].map(t => (
+              <TouchableOpacity key={t} style={styles.chip} onPress={() => handleTerritorySelect(t)}>
+                <Text style={styles.chipText}>{t}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsRowSecondary}>
+            {['Central','Tsim Sha Tsui','Mong Kok','Causeway Bay','Wan Chai','Sha Tin','Yuen Long','Tuen Mun'].map(d => (
+              <TouchableOpacity key={d} style={styles.chipSecondary} onPress={() => handleDistrictSelect(d)}>
+                <Text style={styles.chipSecondaryText}>{d}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+
+
         {/* Popular Restaurants */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -230,6 +281,86 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
     textAlign: 'center',
   },
+  promoBanner: {
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.xl,
+    padding: spacing.lg,
+    backgroundColor: colors.primary.purple50,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    borderColor: colors.primary.purple,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  promoLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  logoBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.primary.purple,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  promoTitle: {
+    ...typography.h5,
+    color: colors.primary.purple,
+    fontWeight: '800',
+  },
+  promoSubtitle: {
+    ...typography.caption,
+    color: colors.text.secondary,
+  },
+  promoCta: {
+    paddingVertical: 8,
+    paddingHorizontal: spacing.md,
+    backgroundColor: colors.primary.purple,
+    borderRadius: borderRadius.md,
+  },
+  promoCtaText: {
+    ...typography.caption,
+    color: colors.text.inverse,
+    fontWeight: '700',
+  },
+  chipsRow: {
+    paddingLeft: spacing.lg,
+    paddingBottom: spacing.sm,
+  },
+  chipsRowSecondary: {
+    paddingLeft: spacing.lg,
+  },
+  chip: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: 8,
+    borderRadius: borderRadius.full,
+    marginRight: spacing.sm,
+    backgroundColor: colors.background.secondary,
+    borderWidth: 1,
+    borderColor: colors.border.light,
+  },
+  chipText: {
+    ...typography.caption,
+    color: colors.text.primary,
+    fontWeight: '600',
+  },
+  chipSecondary: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: 8,
+    borderRadius: borderRadius.full,
+    marginRight: spacing.sm,
+    backgroundColor: colors.background.secondary,
+    borderWidth: 1,
+    borderColor: colors.border.light,
+  },
+  chipSecondaryText: {
+    ...typography.caption,
+    color: colors.text.secondary,
+  },
+
   authButton: {
     position: 'absolute',
     right: spacing.lg,

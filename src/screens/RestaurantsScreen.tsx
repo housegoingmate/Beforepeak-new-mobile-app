@@ -75,6 +75,10 @@ export const RestaurantsScreen: React.FC = () => {
     if (params?.sortBy) {
       setFilters(prev => ({ ...prev, sort_by: params.sortBy }));
     }
+    if (params?.territory) {
+      const territories = Array.isArray(params.territory) ? params.territory : [params.territory];
+      setFilters(prev => ({ ...prev, territory: territories }));
+    }
 
     loadRestaurants();
   }, [route.params, loadRestaurants]);
