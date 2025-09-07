@@ -81,7 +81,7 @@ const resources = {
   },
 };
 
-const locales = RNLocalize.getLocales();
+const locales = typeof RNLocalize.getLocales === 'function' ? RNLocalize.getLocales() : [];
 const rawDevice = Array.isArray(locales) && locales.length > 0 ? locales[0].languageTag : 'en';
 const normalizedDevice: AppLanguage = rawDevice?.toLowerCase().startsWith('zh') ? 'zh-HK' : 'en';
 
