@@ -22,7 +22,7 @@ import { UIRestaurant } from '../types/database';
 import { fetchPopularRestaurants, fetchNearbyRestaurants, fetchDistinctTerritories, fetchDistinctDistricts, fetchTopRatedRestaurants, fetchMostReviewedRestaurants, fetchNewThisWeekRestaurants, fetchTonightOnlyRestaurants, fetchFillingFastRestaurants } from '../services/restaurants';
 import { hapticFeedback } from '../utils/haptics';
 import { supabase } from '../lib/supabase';
-import { toggleFavorite } from '../services/FavoritesService';
+import { toggleFavorite, listFavoriteRestaurants } from '../services/FavoritesService';
 
 
 export const HomeScreen: React.FC = () => {
@@ -31,6 +31,7 @@ export const HomeScreen: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [popularRestaurants, setPopularRestaurants] = useState<UIRestaurant[]>([]);
   const [nearbyRestaurants, setNearbyRestaurants] = useState<UIRestaurant[]>([]);
+  const [favoriteRestaurants, setFavoriteRestaurants] = useState<UIRestaurant[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [isAuthed, setIsAuthed] = useState(false);
@@ -87,6 +88,19 @@ export const HomeScreen: React.FC = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const loadFavorites = async () => {
+      if (!isAuthed) { setFavoriteRestaurants([]); return; }
+      try {
+        const favs = await listFavoriteRestaurants();
+        setFavoriteRestaurants(favs.slice(0, 10));
+      } catch (e) {
+        console.warn('load favorites failed', e);
+      }
+    };
+    loadFavorites();
+  }, [isAuthed]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -261,6 +275,30 @@ export const HomeScreen: React.FC = () => {
               <Text style={styles.howText}>Book with small fee</Text>
             </View>
           </View>
+
+        </View>
+
+
+        {/* Favorites (signed-in) */}
+        {isAuthed && favoriteRestaurants.length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Your favorites</Text>
+              <TouchableOpacity onPress={() => navigation.navigate('Favorites' as never)}>
+                <Text style={styles.viewAllText}>{t('home.viewAll')}</Text>
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              data={favoriteRestaurants}
+              renderItem={renderRestaurantItem}
+              keyExtractor={(item) => item.id}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.horizontalList}
+            />
+          </View>
+        )}
+
 
         {/* Tonight only */}
         {tonightOnly.length > 0 && (
