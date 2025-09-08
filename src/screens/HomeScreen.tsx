@@ -244,8 +244,8 @@ export const HomeScreen: React.FC = () => {
               <Ionicons name="restaurant" size={18} color={colors.text.inverse} />
             </View>
             <View>
-              <Text style={styles.promoTitle}>Up to 50% OFF</Text>
-              <Text style={styles.promoSubtitle}>during non-peak hours</Text>
+              <Text style={styles.promoTitle}>50% OFF</Text>
+              <Text style={styles.promoSubtitle}>beat-the-crowd hours</Text>
               <View style={styles.trustRow}>
                 <Ionicons name="wallet" size={16} color={colors.text.inverse} />
                 <Text style={styles.trustText}> PayMe ready</Text>
@@ -264,11 +264,11 @@ export const HomeScreen: React.FC = () => {
           <View style={styles.howRow}>
             <View style={styles.howItem}>
               <Ionicons name="search" size={18} color={colors.primary.purple} />
-              <Text style={styles.howText}>Find a non-peak slot</Text>
+              <Text style={styles.howText}>Find beat-the-crowd hours</Text>
             </View>
             <View style={styles.howItem}>
               <Ionicons name="pricetag" size={18} color={colors.primary.purple} />
-              <Text style={styles.howText}>Enjoy up to 50% off</Text>
+              <Text style={styles.howText}>Enjoy 50% off</Text>
             </View>
             <View style={styles.howItem}>
               <Ionicons name="card" size={18} color={colors.primary.purple} />
